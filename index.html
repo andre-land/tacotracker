@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Taco Tracker</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌮</text></svg>"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header id="header">
+      <div class="header-inner">
+        <div class="logo">
+          <span class="logo-emoji">🌮</span>
+          <span class="logo-name">Taco Tracker</span>
+        </div>
+        <div class="header-actions">
+          <button
+            id="locate-btn"
+            class="btn btn-outline"
+            title="Center map on my location"
+          >
+            🎯 My Location
+          </button>
+          <button id="add-btn" class="btn btn-primary">+ Add a Truck</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main layout -->
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside id="sidebar">
+        <div class="sidebar-head">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+              id="search"
+              type="search"
+              placeholder="Search taco trucks..."
+              autocomplete="off"
+            />
+          </div>
+          <p id="truck-count" class="truck-count">0 trucks</p>
+        </div>
+        <div id="truck-list" class="truck-list"></div>
+      </aside>
+
+      <!-- Map -->
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div id="pin-hint" class="pin-hint hidden">
+          <span>📍 Click on the map to place the truck</span>
+          <button id="cancel-pin" class="btn btn-sm btn-light">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <!-- /layout -->
+
+    <!-- ── Add Truck Modal ─────────────────────────────────── -->
+    <div
+      id="add-modal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-modal-title"
+    >
+      <div class="modal-backdrop" id="add-backdrop"></div>
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 id="add-modal-title">Report a Taco Truck</h2>
+          <button id="add-close" class="icon-btn" aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+
+        <form id="truck-form" novalidate>
+          <div class="form-group">
+            <label for="f-name">Truck Name <span class="req">*</span></label>
+            <input
+              id="f-name"
+              type="text"
+              placeholder="e.g. El Toro Loco"
+              autocomplete="off"
+            />
+            <p class="field-error hidden" id="name-error">
+              Please enter a truck name.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="f-desc">Description</label>
+            <textarea
+              id="f-desc"
+              placeholder="What makes this truck special? Favorite menu items?"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Location <span class="req">*</span></label>
+            <div class="location-row">
+              <span id="loc-text" class="loc-text muted">No location set</span>
+              <div class="loc-btns">
+                <button
+                  type="button"
+                  id="pick-map-btn"
+                  class="btn btn-sm btn-outline"
+                >
+                  📍 Pick on Map
+                </button>
+                <button
+                  type="button"
+                  id="use-gps-btn"
+                  class="btn btn-sm btn-outline"
+                >
+                  🎯 Use GPS
+                </button>
+              </div>
+            </div>
+            <p class="field-error hidden" id="loc-error">
+              Please set a location.
+            </p>
+            <input type="hidden" id="f-lat" />
+            <input type="hidden" id="f-lng" />
+          </div>
+
+          <div class="form-group">
+            <label>Taco Rating</label>
+            <div
+              id="stars"
+              class="stars"
+              role="group"
+              aria-label="Rate this taco truck from 1 to 5 tacos"
+            >
+              <button type="button" class="star" data-v="1" title="1 taco">
+                🌮
+              </button>
+              <button type="button" class="star" data-v="2" title="2 tacos">
+                🌮
+              </button>
+              <button type="button" class="star" data-v="3" title="3 tacos">
+                🌮
+              </button>
+              <button type="button" class="star" data-v="4" title="4 tacos">
+                🌮
+              </button>
+              <button type="button" class="star" data-v="5" title="5 tacos">
+                🌮
+              </button>
+            </div>
+            <input type="hidden" id="f-rating" value="0" />
+          </div>
+
+          <div class="form-group">
+            <label>Photos of Your Tacos</label>
+            <div class="photo-zone">
+              <input
+                type="file"
+                id="photo-file"
+                accept="image/*"
+                multiple
+                class="sr-only"
+              />
+              <label for="photo-file" class="photo-label">
+                📷 Add Photos
+              </label>
+              <div id="photo-previews" class="photo-previews"></div>
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <button type="button" id="form-cancel" class="btn btn-outline">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">Save Truck 🌮</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- /add-modal -->
+
+    <!-- ── Detail Modal ───────────────────────────────────── -->
+    <div
+      id="detail-modal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detail-title"
+    >
+      <div class="modal-backdrop" id="detail-backdrop"></div>
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 id="detail-title">Truck Name</h2>
+          <button id="detail-close" class="icon-btn" aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+        <div id="detail-body"></div>
+      </div>
+    </div>
+    <!-- /detail-modal -->
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

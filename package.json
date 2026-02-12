@@ -1,0 +1,13 @@
+{
+  "name": "taco-tracker",
+  "version": "1.0.0",
+  "description": "Report and discover taco truck locations",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.1.0"
+  }
+}
